@@ -146,7 +146,7 @@ namespace DatabaseProfiler
                         ColumnInfo column = new ColumnInfo();
                         column.Name = reader["COLUMN_NAME"].ToString()!;
                         column.DataType = reader["DATA_TYPE"].ToString()!;
-                        column.CharacterMaxLength = reader["CHARACTER_MAXIMUM_LENGTH"].ToString()!;
+                        column.CharacterMaxLength = reader["CHARACTER_MAXIMUM_LENGTH"] == DBNull.Value ? "N/A" : reader["CHARACTER_MAXIMUM_LENGTH"].ToString();
                         column.isNullable = reader["IS_NULLABLE"].ToString()!;
                         table.Columns.Add(column);
                     }

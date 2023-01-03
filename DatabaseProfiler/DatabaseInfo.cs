@@ -11,28 +11,28 @@ namespace DatabaseProfiler
     {
         public MagickImage Image { get; set; } = new MagickImage();
         public string Description { get; set; } = "";
-        private int _padding { get; set; } = 10;
-        public int Margin { get; set; } = 10;
-        public int Line_Spacing { get; set; } = 5;
-        public int Canvas_Width { get; set; } = 1024;
-        public int Canvas_Height { get; set; } = 768;
-        public int Width { get; set; } = 200;
-        public int Height { get; set; } = 100;
+        private double _padding { get; set; } = 10;
+        public double Margin { get; set; } = 10;
+        public double Line_Spacing { get; set; } = 5;
+        public double Canvas_Width { get; set; } = 1024;
+        public double Canvas_Height { get; set; } = 768;
+        public double Width { get; set; } = 200;
+        public double Height { get; set; } = 100;
         public string Font_Name { get; set; } = "Coda"; //Coda //Frank //Aldritch
-        public int Font_Size { get; set; } = 18;
+        public double Font_Size { get; set; } = 18;
         public bool Transparent_Background { get; set; } = false;
         public MagickColor Font_Color { get; set; } = new MagickColor("#C9D1D9");
         public MagickColor Background_Color { get; set; } = new MagickColor("#0D1117");
         public MagickColor Foreground_Color { get; set; } = new MagickColor("#161B22");
         public MagickColor Border_Color { get; set; } = new MagickColor("#30363D");
         // dark 0D1117 //light 161B22 // font C9D1D9 // border 30363D // buttons 21262D
-        public int Border_Width { get; set; } = 5;
-        public int Corner_Radius { get; set; } = 5;
-        public int X { get; set; } = 10;
-        public int Y { get; set; } = 10;
+        public double Border_Width { get; set; } = 5;
+        public double Corner_Radius { get; set; } = 5;
+        public double X { get; set; } = 10;
+        public double Y { get; set; } = 10;
         public string OutputFolder { get; set; } = "D:\\Pictures\\DatabaseMaps";
         public string TablesOutputFolder { get; set; } = "D:\\Pictures\\DatabaseMaps\\Tables";
-        internal InfoObject(int canvas_width = 1024, int canvas_height = 768, bool transparent = false)
+        internal InfoObject(double canvas_width = 1024, double canvas_height = 768, bool transparent = false)
         {
             Canvas_Width = canvas_width;
             Canvas_Height = canvas_height;
@@ -42,53 +42,53 @@ namespace DatabaseProfiler
         {
             if (Transparent_Background)
             {
-                Image = new MagickImage(MagickColors.Transparent, Canvas_Width, Canvas_Height);
+                Image = new MagickImage(MagickColors.Transparent, (int)Canvas_Width, (int)Canvas_Height);
             }
             else
             {
-                Image = new MagickImage(Background_Color, Canvas_Width, Canvas_Height);
+                Image = new MagickImage(Background_Color, (int)Canvas_Width, (int)Canvas_Height);
             }
             Image.Format = MagickFormat.Png;
         }
         public void Create(DatabaseInfo dbinfo)
         {
-
             foreach (SchemaInfo sch in dbinfo.Schemas)
             {
                 // First, calculate the height and width the image will need to be.
-                int total_max_width = 0;
-                int total_max_height = 0;
+                double total_max_width = 0;
+                double total_max_height = 0;
                 ///// calculate the width of the info panel box
-                Font_Size = Font_Size + 2;
-                List<int> lengths = new List<int>() { dbinfo.Info.Host.Length + "DataSource: ".Length, dbinfo.Info.Database_Name.Length + "Database: ".Length, dbinfo.Info.Schema_Name.Length + "Schema: ".Length, dbinfo.Info.Date.ToShortDateString().Length + "As of: ".Length };
-                int info_panel_width = (lengths.Max() * (Font_Size / 2)) + (_padding * 2) + (Border_Width * 2) + (Margin * 2);
-                int info_panel_height = (Font_Size * 3) + (Line_Spacing * 3) + (_padding * 2) + (Border_Width * 2) + (Margin * 2);
-                dbinfo.Info.Width = info_panel_width;
-                dbinfo.Info.Height = info_panel_height;
-                //total_max_height = info_panel_height;
+                dbinfo.Image.Settings.FontPointsize = Font_Size + 3;
+
+                List<double> lengths = new List<double>() {
+                    dbinfo.Image.FontTypeMetrics(string.Format("{0}", "DataSource: " + dbinfo.Info.Host)).TextWidth,
+                    dbinfo.Image.FontTypeMetrics(string.Format("{0}", "Database: " + dbinfo.Info.Database_Name)).TextWidth,
+                    dbinfo.Image.FontTypeMetrics(string.Format("{0}", "Schema: " + dbinfo.Info.Schema_Name)).TextWidth,
+                    dbinfo.Image.FontTypeMetrics(string.Format("{0}", "As of: " + dbinfo.Info.Date.ToShortDateString())).TextWidth
+                };
+                double info_panel_width = lengths.Max() + (_padding * 2) + (Border_Width * 2) + (Margin * 2);
+                dbinfo.Info.Width = lengths.Max() + (_padding * 2) + (Border_Width * 2) + (Margin * 2);
+                dbinfo.Info.Height = dbinfo.Image.FontTypeMetrics(dbinfo.Info.Host).TextHeight * 3 + (Line_Spacing * 3) + (_padding * 2) + (Border_Width * 2) + (Margin * 2);
+
                 foreach (TableInfo tbl in sch.Tables)
                 {
                     // Make sure the table width is at least wide enough to fit the name of the table.
-                    int minimum_spacing = 10; // spacing between column name and column type based on size of a single letter.
-                    int table_max_width = ((tbl.Name.Length) * ((Font_Size + 2) / 2)) + (Font_Size / 2) + minimum_spacing + (tbl.RecordCount.ToString().Length * (Font_Size / 2));
-
+                    dbinfo.Image.Settings.FontPointsize = Font_Size + 2;
+                    double minimum_spacing = dbinfo.Image.FontTypeMetrics("-----").TextWidth;
+                    double table_max_width = dbinfo.Image.FontTypeMetrics(tbl.Name).TextWidth + minimum_spacing + dbinfo.Image.FontTypeMetrics(string.Format("({0})", tbl.RecordCount.ToString())).TextWidth;
+                    dbinfo.Image.Settings.FontPointsize = Font_Size;
                     foreach (ColumnInfo col in tbl.Columns)
                     {
                         //// Calculate the width of a column based on the text of the name of the column and the data type, padding, margins, borders, etc.
-                        int column_width = ((col.Name.Length + col.DataType.Length) * (Font_Size / 2)) + (minimum_spacing * (Font_Size / 2));
-                        // Make it the max width if it's longer than anything that came before it.
+                        double column_width = dbinfo.Image.FontTypeMetrics(col.Name).TextWidth + minimum_spacing + dbinfo.Image.FontTypeMetrics(col.DataType).TextWidth + minimum_spacing + dbinfo.Image.FontTypeMetrics(col.CharacterMaxLength).TextWidth;
                         if (table_max_width < column_width)
                         {
                             table_max_width = column_width;
                         }
                     }
-                    total_max_width += table_max_width + (_padding * 2) + (Margin * 4);
-
-                    // Check the max height: height of row in the column list + top and bottom padding + the space between the lines.
-                    int title_panel_height = (Font_Size + 2) + (_padding * 2);
-                    //int table_height = ((tbl.Columns.Count) * Font_Size) + _padding + (tbl.Columns.Count * Line_Spacing) + title_panel_height;
-                    int table_height = tbl.Columns.Count * (Font_Size + (Line_Spacing / 2)) + (_padding * 2) + title_panel_height;
-                    // y += Font_Size + (Line_Spacing / 2);
+                    total_max_width += table_max_width + (_padding * 2) + (Margin * 2);
+                    double title_panel_height = dbinfo.Image.FontTypeMetrics(tbl.Name).TextHeight + (_padding * 2);
+                    double table_height = tbl.Columns.Count * (dbinfo.Image.FontTypeMetrics(tbl.Name).TextHeight) + (_padding * 2) + title_panel_height;
 
                     ///// Make sure total max width is at least as wide as the info panel.
                     if (total_max_width < info_panel_width)
@@ -105,21 +105,18 @@ namespace DatabaseProfiler
                         total_max_height = table_height;
                     }
                 }
-                //Console.WriteLine(string.Format("Final Max Width: {0}\n\n================", cur_max_width));
-                Canvas_Width = total_max_width + _padding + (Margin * 2);
-                Canvas_Height = total_max_height + info_panel_height + _padding + Margin;
+                Canvas_Width = total_max_width + _padding;
+                Canvas_Height = total_max_height + dbinfo.Info.Height + (_padding * 2) + (Margin * 2);
                 _init();
 
                 // Now we do the drawing.
-                int x = 10;
-                int y = 10;
-                //cur_max_height = y;
+                double x = 10;
+                double y = 10;
                 dbinfo.Info.Schema_Name = sch.Name;
                 CreateInfoPanelObject(dbinfo.Info, x, y);
                 dbinfo.Info.Object_Image.Draw(Image);
                 y += dbinfo.Info.Height + Margin;
 
-                Font_Size = Font_Size - 2;
                 foreach (TableInfo tbl in sch.Tables)
                 {
                     CreateTableObject(tbl, x, y);
@@ -129,27 +126,21 @@ namespace DatabaseProfiler
                 Image.Write(Path.Combine(OutputFolder, string.Format("{0}_{1}.png", dbinfo.Info.Database_Name, dbinfo.Info.Schema_Name)));
             }
         }
-        public InfoPanel CreateInfoPanelObject(InfoPanel info, int x, int y)
+        public InfoPanel CreateInfoPanelObject(InfoPanel info, double x, double y)
         {
-            int y_orig = y;
-            int x_orig = x;
+            double y_orig = y;
+            double x_orig = x;
 
-            int orig_font_size = Font_Size;
+            double orig_font_size = Font_Size;
             Font_Size += 3;
-            //List<int> lengths = new List<int>() { info.Host.Length, info.Database_Name.Length, info.Schema_Name.Length, info.Date.ToShortDateString().Length };
-            //int width = (lengths.Max() * (Font_Size / 2)) + (_padding * 2) + (Border_Width * 2);
-            //int height = (Font_Size * (lengths.Count - 1)) + (Line_Spacing * (lengths.Count - 1)) + (_padding * (lengths.Count - 1));
             Drawables inf = new Drawables();
-            //inf.FillColor(Background_Color);
-            //inf.StrokeColor(Border_Color);
-            //inf.RoundRectangle(x, y, x + width + (_padding * 3), y + height, Corner_Radius, Corner_Radius); //Main box
 
             inf.FontPointSize(Font_Size);
             inf.Font(Font_Name);
 
             inf.FillColor(Font_Color);
             inf.StrokeColor(Border_Color);
-            inf.RoundRectangle(x, y + _padding, x + info.Width + (_padding * 4), y + Font_Size + (_padding * 1.5), Corner_Radius, Corner_Radius);
+            inf.RoundRectangle(x, y + _padding, x + info.Width + _padding, y + Font_Size + (_padding * 1.5), Corner_Radius, Corner_Radius);
 
             x += _padding;
             y += Font_Size + _padding;
@@ -197,7 +188,7 @@ namespace DatabaseProfiler
             //info.Height = height;
             return info;
         }
-        public Drawables CreateDatabaseObject(string name, int x, int y, int width = 100, int height = 50, int font_size = 16)
+        public Drawables CreateDatabaseObject(string name, double x, double y, double width = 100, double height = 50, double font_size = 16)
         {
             Drawables db = new Drawables();
             db.FillColor(MagickColors.Snow);
@@ -213,7 +204,7 @@ namespace DatabaseProfiler
             db.Draw(Image);
             return db;
         }
-        public Drawables CreateSchemaObject(string name, int x, int y, int width = 100, int height = 50, int font_size = 16)
+        public Drawables CreateSchemaObject(string name, double x, double y, double width = 100, double height = 50, double font_size = 16)
         {
             //Console.WriteLine(string.Format("x: {0} | y: {1} | width: {2} | height: {3}", x, y, width, height));
             Drawables schema = new Drawables();
@@ -230,12 +221,8 @@ namespace DatabaseProfiler
             schema.Draw(Image);
             return schema;
         }
-        public TableInfo CreateTableObject(TableInfo table, int x, int y)
+        public TableInfo CreateTableObject(TableInfo table, double x, double y)
         {
-            //--Not Implemented
-            //MagickImage table_icon = new MagickImage(".\\images\\Database_Table_Light.png");
-            //table_icon.Resize(32, 32);
-
             Drawables tbl = new Drawables();
             tbl.FillColor(Background_Color);
             tbl.StrokeColor(Border_Color);
@@ -264,7 +251,18 @@ namespace DatabaseProfiler
                 tbl.TextAlignment(TextAlignment.Left);
                 tbl.Text(x, y, table.Columns[c].Name);
                 tbl.TextAlignment(TextAlignment.Right);
-                tbl.Text(x + table.Width, y, table.Columns[c].DataType);
+                if (table.Columns[c].CharacterMaxLength == "N/A")
+                {
+                    tbl.Text(x + table.Width, y, table.Columns[c].DataType);
+                }
+                else if (table.Columns[c].CharacterMaxLength == "-1")
+                {
+                    tbl.Text(x + table.Width, y, string.Format("{0}(MAX)", table.Columns[c].DataType));
+                }
+                else
+                {
+                    tbl.Text(x + table.Width, y, string.Format("{0}({1})", table.Columns[c].DataType, table.Columns[c].CharacterMaxLength));
+                }
                 y += Font_Size + (Line_Spacing / 2);
             }
             table.Object_Image = tbl;
@@ -276,9 +274,9 @@ namespace DatabaseProfiler
     public class DatabaseInfo : InfoObject
     {
         public string Name { get; set; } = "";
-        public int DatabaseID { get; set; }
+        public double DatabaseID { get; set; }
         public string Schema { get; set; } = "";
-        public int FileSize { get; set; }
+        public double FileSize { get; set; }
         public string StateDescription { get; set; } = "";
         public string UserAccessDescription { get; set; } = "";
         public DateTime CreateDate { get; set; }
@@ -326,10 +324,10 @@ namespace DatabaseProfiler
     {
         public string Database_Name = "";
         public string Schema_Name = "dbo";
-        public string Host = "";
+        public string Host = "None";
         public DateTime Date = DateTime.Now;
-        public int Width;
-        public int Height;
+        public double Width;
+        public double Height;
         public Drawables Object_Image = new Drawables();
     }
 }
