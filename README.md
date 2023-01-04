@@ -1,7 +1,12 @@
 # DatabaseProfiler
 
 # About
-This is a quick and dirty C# .NET console app for automatically generating pictures of database schema info to use in documentation.
+This is a quick and dirty C# .NET console app for automatically generating pictures of database schema info to use in documentation. 
+Here is an example of an image created for a schema named `CL` in a database named `LegacySourceCode`:
+
+<p align="center">
+    <img align="center" src="./LegacySourceCode_CL.png">
+</p>
 
 # Usage
 From the command line, run `DatabaseProfiler.exe` with the following mandatory parameters:
@@ -10,6 +15,7 @@ From the command line, run `DatabaseProfiler.exe` with the following mandatory p
 2.  `-o` output path
 3.  `-c` standard SQL connection string
 
+The images are created per schema, and the filenames are in `database_schema.png` format.
 ## Example
 If you wanted to generate pictures for a database named `SuperAwesomeDB` on the SQL Server located at `192.168.100.101`, 
 and have the generated pictures saved to your desktop, this is what you'd execute at the command line:
