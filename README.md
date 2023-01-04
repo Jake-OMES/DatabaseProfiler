@@ -34,4 +34,5 @@ If you wanted to do ALL the databases on the server instead of just one, simply 
  - You can't yet change the colors yourself unless you do so in the code itself.
  - You can't change the font, nor the font size, unless you do so in the code itself.
  - You can't change any part of the generated design unless you do so in the code itself.
+ - There is a setting in the code for giving it a transparent background, but...no command line option yet.
  - I needed this for reporting and documentation, so it works as well as I needed it to at the moment.
