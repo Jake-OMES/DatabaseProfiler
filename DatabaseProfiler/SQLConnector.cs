@@ -15,6 +15,10 @@ namespace DatabaseProfiler
         {
 
         }
+        public SQLConnector(string connection_string)
+        {
+            SQLConnectionString = connection_string;
+        }
         public List<DatabaseInfo> GetDatabaseList()
         {
             using (SqlConnection con = new SqlConnection(SQLConnectionString))
@@ -48,6 +52,7 @@ namespace DatabaseProfiler
         public DatabaseInfo GetDatabaseInfo(DatabaseInfo database, bool include_row_counts = false)
         {
             database = GetSchemaAndTableList(database);
+
             for (int s = 0; s < database.Schemas.Count; s++)
             {
                 SchemaInfo schema = database.Schemas[s];
@@ -77,25 +82,37 @@ namespace DatabaseProfiler
                 using (SqlCommand sqlcommand = new SqlCommand(qry, con))
                 {
                     con.Open();
-                    SqlDataReader reader = sqlcommand.ExecuteReader();
-                    while (reader.Read())
+
+                    try
                     {
-                        string schem = reader["TABLE_SCHEMA"].ToString()!;
-                        if (!schema_list.Keys.Contains(schem))
+                        SqlDataReader reader = sqlcommand.ExecuteReader();
+                        while (reader.Read())
                         {
-                            schema_list.Add(schem, new SchemaInfo());
-                            schema_list[schem].Name = schem;
+                            string schem = reader["TABLE_SCHEMA"].ToString()!;
+                            if (!schema_list.Keys.Contains(schem))
+                            {
+                                schema_list.Add(schem, new SchemaInfo());
+                                schema_list[schem].Name = schem;
+                            }
+                            TableInfo table = new TableInfo();
+                            table.Name = reader["TABLE_NAME"].ToString()!;
+                            table.Schema = reader["TABLE_SCHEMA"].ToString()!;
+                            table.Catalog = reader["TABLE_CATALOG"].ToString()!;
+                            schema_list[schem].Tables.Add(table);
                         }
-                        TableInfo table = new TableInfo();
-                        table.Name = reader["TABLE_NAME"].ToString()!;
-                        table.Schema = reader["TABLE_SCHEMA"].ToString()!;
-                        table.Catalog = reader["TABLE_CATALOG"].ToString()!;
-                        schema_list[schem].Tables.Add(table);
+                        con.Close();
+                        foreach (SchemaInfo schema in schema_list.Values)
+                        {
+                            database.Schemas.Add(schema);
+                        }
                     }
-                    con.Close();
-                    foreach (SchemaInfo schema in schema_list.Values)
+                    catch (SqlException ex)
                     {
-                        database.Schemas.Add(schema);
+                        Console.WriteLine(string.Format("SQL Error!\n{0}", ex.Message));
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(string.Format("Error!\n{0}", ex.Message));
                     }
                 }
             }
@@ -168,6 +185,37 @@ namespace DatabaseProfiler
                 }
             }
             return table;
+        }
+
+        // This is just a bonus cheat method for generating INSERT SELECT's to quickly move data from one db to another.
+        // It doesn't necessarily belong in this app, but I needed it, so here it is.
+        public void CreateTransferScripts(DatabaseInfo database, string destination_db_name)
+        {
+            foreach (SchemaInfo sch in database.Schemas)
+            {
+
+                foreach (TableInfo tbl in sch.Tables)
+                {
+
+                    string columns = "";
+                    foreach (ColumnInfo col in tbl.Columns)
+                    {
+                        columns += string.Format("[{0}],\n ", col.Name);
+                    }
+                    columns = columns.Substring(0, columns.Length - 3);
+                    string truncate_query = string.Format("\nTRUNCATE TABLE [{0}].[{1}].[{2}]\nGO", destination_db_name, sch.Name, tbl.Name);
+                    string ident_insert_on = string.Format("SET IDENTITY_INSERT [{0}].[{1}].[{2}] ON\nGO", destination_db_name, sch.Name, tbl.Name);
+                    string insertquery = string.Format("INSERT INTO [{0}].[{1}].[{2}] (\n {3}\n)", destination_db_name, sch.Name, tbl.Name, columns);
+                    string selectquery = string.Format("SELECT\n {0} \nFROM [{1}].[{2}].[{3}]\nGO", columns, database.Name, sch.Name, tbl.Name);
+                    string ident_insert_off = string.Format("SET IDENTITY_INSERT [{0}].[{1}].[{2}] OFF\nGO", destination_db_name, sch.Name, tbl.Name);
+                    Console.WriteLine(truncate_query);
+                    Console.WriteLine(ident_insert_on);
+                    Console.WriteLine(insertquery);
+                    Console.WriteLine(selectquery);
+                    Console.WriteLine(ident_insert_off);
+                    Console.WriteLine("------------");
+                }
+            }
         }
     }
 }

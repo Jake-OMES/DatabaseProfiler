@@ -2,7 +2,7 @@
   "profiles": {
     "DatabaseProfiler": {
       "commandName": "Project",
-      "commandLineArgs": "-d All\r\n-o \"D:\\Pictures\\DatabaseMaps\"\r\n-c \"Data Source=192.168.10.110;User Id=sa;Password=Heritage99$;Connection Timeout=10\""
+      "commandLineArgs": "-d All\r\n-o \"D:\\Pictures\\DatabaseMaps\"\r\n-c \"Data Source=192.168.10.110;User Id=sa;Password=Heritage99$;Connection Timeout=10\"\r\n-n \"Coda\""
     }
   }
 }
