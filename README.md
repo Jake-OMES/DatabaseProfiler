@@ -8,12 +8,6 @@ Here is an example of an image created for a schema named `CL` in a database nam
     <img align="center" src="./LegacySourceCode_CL.png">
 </p>
 
-And with a transparent background:
-
-<p align="center">
-    <img align="center" src="./LegacySourceCode_CL_a.png">
-</p>
-
 # Usage
 From the command line, run `DatabaseProfiler.exe` with the following mandatory parameters:
 
