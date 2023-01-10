@@ -1,5 +1,7 @@
 # DatabaseProfiler
 
+You can download the pre-built [Windows x64 build here](https://github.com/Jake-OMES/DatabaseProfiler/tree/master/DatabaseProfiler/Dist/win-x64). There is no install, simply make sure the other two files (`Magick.Native-Q16-x64.dll` and `sni.dll`) are downloaded and in the same folder as `DatabaseProfiler.exe` when you run it.
+
 # About
 This is a quick and dirty C# .NET console app for automatically generating pictures of database schema info to use in documentation. 
 Here is an example of an image created for a schema named `CL` in a database named `LegacySourceCode`:
